@@ -1,0 +1,23 @@
+Package: MethylRegion
+Type: Package
+Title: A Unified Framework for Differential Methylation Regions
+Version: 0.1.0
+Author: Xiaoqing Pan, Juanjie Wu, Yifan Yang [aut, cre]
+Maintainer: Yifan Yang <yfyang.86@hotmail.com>
+Authors@R: c(
+    person("Xiaoqing", "Pan", role = "aut"),
+    person("Juanjie", "Wu", role = "aut"),
+    person("Yifan", "Yang", email = "yfyang.86@hotmail.com", role = c("aut", "cre"))
+  )
+Description: Provides region-level methylation analysis across case-control,
+    paired treatment, continuous phenotype, and longitudinal continuous
+    phenotype designs. The package unifies branch-specific AMRfinder prototypes
+    into a single MethylRegion API with separate functions for DMR and AMR
+    study designs.
+License: Apache License (>= 2)
+Encoding: UTF-8
+Depends: R (>= 4.0.0)
+Imports:
+    stats
+URL: https://github.com/godot4k/MethylRegion
+BugReports: https://github.com/godot4k/MethylRegion/issues

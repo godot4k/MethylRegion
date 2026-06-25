@@ -1,0 +1,6 @@
+^\.git$
+^\.gitignore$
+^\.\.Rcheck$
+^LICENSE$
+^README\.Rmd$
+^MethylRegion\.Rproj$
