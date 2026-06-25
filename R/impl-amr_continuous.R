@@ -172,7 +172,9 @@ segment_pSTKopt<-function(intput_dat,y,cov.mod,XS,a,b,chr,mincpgs,trend,valley,K
           ks3<-cortest(intput_dat,y,method, cov.mod,n,m)
         }
       }
-      newp<-min(ks1[1],ks2[1],ks3[1])
+      newp<-min(ks1[1],ks2[1],ks3[1], na.rm = TRUE)
+      if(!is.finite(newp)) newp <- 2
+      if(!is.finite(KS[1])) KS[1] <- 2
       if((newp<KS[1]||(newp>1&&KS[1]>1))&&(b-a>=mincpgs)){
         stack<-list(a=a,b=b,ab=ab,child=child+1,ks1=ks1,ks2=ks2,ks3=ks3,KS=KS)
         stacks<-append(stacks,list(stack))
@@ -308,6 +310,16 @@ segmenterSTK<-function(intput_dat,y,cov.mod,XS,a,b,chr,mincpgs,trend,valley,KS,m
 output<-function(intput_dat,y,cov.mod,XS,global,chr,mincpgs,trend,valley,method){
   tmp<-NULL
   outputList<-NULL
+  collapseTmp<-function(tmp){
+    if(is.null(tmp)) return(NULL)
+    tmp<-as.data.frame(tmp)
+    start<-min(as.numeric(unlist(tmp$start)))
+    stop<-max(as.numeric(unlist(tmp$stop)))
+    tmp<-tmp[1,]
+    tmp$start<-start
+    tmp$stop<-stop
+    return(tmp)
+  }
   nbreaks<-nrow(global)
   if(nbreaks>0){
     for(i in 1:nbreaks){
@@ -324,13 +336,16 @@ output<-function(intput_dat,y,cov.mod,XS,global,chr,mincpgs,trend,valley,method)
         }
       }else{
         if(!is.null(tmp)){
+          tmp<-collapseTmp(tmp)
+          tmp_start<-as.integer(as.numeric(unlist(tmp$start))[1])
+          tmp_stop<-as.integer(as.numeric(unlist(tmp$stop))[1])
           ks<-c(2,2)
-          if(tmp$stop-tmp$start+1>=mincpgs&&calcSingleTrendAbs(XS,tmp$start,tmp$stop)>trend&&noValley(XS,tmp$start,tmp$stop,mincpgs,valley)){
-            ks<-cortest(intput_dat,y, method, cov.mod,tmp$start,tmp$stop)
+          if(isTRUE((tmp_stop-tmp_start+1>=mincpgs)[1])&&isTRUE((calcSingleTrendAbs(XS,tmp_start,tmp_stop)>trend)[1])&&isTRUE((noValley(XS,tmp_start,tmp_stop,mincpgs,valley)==1)[1])){
+            ks<-cortest(intput_dat,y, method, cov.mod,tmp_start,tmp_stop)
           }
           if(ks[1]<2){
-            out<-data.frame(chr=chr,start=intput_dat$pos[tmp$start]-1,stop=intput_dat$pos[tmp$stop],q=-1,length=tmp$stop-tmp$start+1,cor_est = ks[3],coef_lm=ks[2],p_value=ks[1])
-            methX <- mean(as.numeric(as.matrix(intput_dat[tmp$start:tmp$stop, -c(1, 2)])), na.rm = TRUE)
+            out<-data.frame(chr=chr,start=intput_dat$pos[tmp_start]-1,stop=intput_dat$pos[tmp_stop],q=-1,length=tmp_stop-tmp_start+1,cor_est = ks[3],coef_lm=ks[2],p_value=ks[1])
+            methX <- mean(as.numeric(as.matrix(intput_dat[tmp_start:tmp_stop, -c(1, 2)])), na.rm = TRUE)
             methY <- mean(as.numeric(as.matrix(y)), na.rm = TRUE)
             out$methX<-methX
             out$methY<-methY
@@ -348,13 +363,16 @@ output<-function(intput_dat,y,cov.mod,XS,global,chr,mincpgs,trend,valley,method)
     }
   }
   if(!is.null(tmp)){
+    tmp<-collapseTmp(tmp)
+    tmp_start<-as.integer(as.numeric(unlist(tmp$start))[1])
+    tmp_stop<-as.integer(as.numeric(unlist(tmp$stop))[1])
     ks<-c(2,2)
-    if(tmp$stop-tmp$start+1>=mincpgs&&calcSingleTrendAbs(XS,tmp$start,tmp$stop)>trend&&noValley(XS,tmp$start,tmp$stop,mincpgs,valley)){
-      ks<-cortest(intput_dat,y, method, cov.mod,tmp$start,tmp$stop)
+    if(isTRUE((tmp_stop-tmp_start+1>=mincpgs)[1])&&isTRUE((calcSingleTrendAbs(XS,tmp_start,tmp_stop)>trend)[1])&&isTRUE((noValley(XS,tmp_start,tmp_stop,mincpgs,valley)==1)[1])){
+      ks<-cortest(intput_dat,y, method, cov.mod,tmp_start,tmp_stop)
     }
     if(ks[1]<2){
-      out<-data.frame(chr=chr,start=intput_dat$pos[tmp$start]-1,stop=intput_dat$pos[tmp$stop],q=-1,length=tmp$stop-tmp$start+1,cor_est = ks[3],coef_lm=ks[2],p_value=ks[1])
-      methX <- mean(as.numeric(as.matrix(intput_dat[tmp$start:tmp$stop, -c(1, 2)])), na.rm = TRUE)
+      out<-data.frame(chr=chr,start=intput_dat$pos[tmp_start]-1,stop=intput_dat$pos[tmp_stop],q=-1,length=tmp_stop-tmp_start+1,cor_est = ks[3],coef_lm=ks[2],p_value=ks[1])
+      methX <- mean(as.numeric(as.matrix(intput_dat[tmp_start:tmp_stop, -c(1, 2)])), na.rm = TRUE)
       methY <- mean(as.numeric(as.matrix(y)), na.rm = TRUE)
       out$methX<-methX
       out$methY<-methY
