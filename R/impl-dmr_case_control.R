@@ -244,14 +244,8 @@ calcEValue <- function(intput_dat, y, a, b) {
   density_log <- function(x, mu, sigma) {
     vector_temp <- na.omit(as.numeric(x))
     n <- length(vector_temp)
-    if (n == 0 || !is.finite(mu) || !is.finite(sigma) || sigma <= 0) {
-      return(NA_real_)
-    }
     value <- mean(vector_temp)
-    if (!is.finite(value)) return(NA_real_)
-    d <- dnorm(x = value, mean = mu, sd = sigma / sqrt(n), log = TRUE)
-    if (!is.finite(d)) return(NA_real_)
-    d
+    log(dnorm(x = value, mean = mu, sd = sigma / sqrt(n)))
   }
 
   control_values <- unlist(region_dat[, control_id, drop = FALSE])
@@ -269,26 +263,12 @@ calcEValue <- function(intput_dat, y, a, b) {
   log_up_test <- apply(region_dat[, test_id, drop = FALSE], 2, density_log, mu = mu_test, sigma = sigma_test)
   log_down_test <- apply(region_dat[, test_id, drop = FALSE], 2, density_log, mu = mu_pooled, sigma = sigma_pooled)
 
-  log_e_value <- sum(c(log_up_control, log_up_test), na.rm = TRUE) -
-    sum(c(log_down_control, log_down_test), na.rm = TRUE)
-  if (!is.finite(log_e_value) || log_e_value <= 0) return(1)
-  if (log_e_value >= log(.Machine$double.xmax)) return(Inf)
-  exp(log_e_value)
+  exp(sum(c(log_up_control, log_up_test)[!is.na(c(log_up_control, log_up_test))]) -
+    sum(c(log_down_control, log_down_test)[!is.na(c(log_down_control, log_down_test))]))
 }
 
 adjustEValueBH <- function(e_value) {
-  p_value <- rep(1, length(e_value))
-  finite_id <- is.finite(e_value) & e_value > 0
-  p_value[finite_id] <- 1 / e_value[finite_id]
-  p_value[is.infinite(e_value) & e_value > 0] <- 0
-  adjusted_p <- p.adjust(p_value, method = "BH")
-  e_adjust <- rep(1, length(adjusted_p))
-  zero_id <- adjusted_p == 0
-  positive_id <- adjusted_p > 0
-  e_adjust[zero_id] <- Inf
-  e_adjust[positive_id] <- 1 / adjusted_p[positive_id]
-  e_adjust[!is.finite(e_adjust) & !zero_id] <- 1
-  e_adjust
+  1 / p.adjust(1 / e_value, method = "BH")
 }
 
 calcSingleDiffSum<-function(intput_dat,y){

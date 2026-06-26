@@ -31,11 +31,15 @@ long_y <- data.frame(
 covariates <- data.frame(age = c(40, 42, 57, 59))
 
 results <- list(
-  dmr_case_control(dat, binary_y, controlist = control),
-  dmr_case_control_cov(dat, binary_y, cov.mod = covariates, controlist = control),
-  dmr_paired(dat, paired_y, controlist = control),
-  amr_continuous(dat, continuous_y, controlist = control),
-  amr_longitudinal(dat, long_y, controlist = control)
+  dmr_case_control = dmr_case_control(dat, binary_y, controlist = control),
+  dmr_case_control_cov = dmr_case_control_cov(dat, binary_y, cov.mod = covariates, controlist = control),
+  dmr_paired = dmr_paired(dat, paired_y, controlist = control),
+  amr_continuous = amr_continuous(dat, continuous_y, controlist = control),
+  amr_longitudinal = amr_longitudinal(dat, long_y, controlist = control)
 )
 
 stopifnot(all(vapply(results, function(x) is.null(x) || is.data.frame(x), logical(1))))
+
+for (name in setdiff(names(results), "dmr_case_control")) {
+  stopifnot(!any(c("e_value", "e_adjust", "e_bh_significant") %in% names(results[[name]])))
+}
