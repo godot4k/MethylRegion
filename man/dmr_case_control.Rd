@@ -1,4 +1,6 @@
 \name{dmr_case_control}
+\alias{mr_bi}
+\alias{mr_continuous}
 \alias{dmr_case_control}
 \alias{dmr_case_control_cov}
 \alias{dmr_paired}
@@ -10,6 +12,12 @@ MethylRegion provides separate entry points for methylation-region analyses
 across binary DMR designs and continuous-phenotype AMR designs.
 }
 \usage{
+mr_bi(input_dat, y, data = c("independent", "paired", "longitudinal"),
+  cov.mod = NULL, controlist = list(), intput_dat = NULL)
+
+mr_continuous(input_dat, y, data = c("independent", "longitudinal"),
+  cov.mod = NULL, controlist = list(), intput_dat = NULL)
+
 dmr_case_control(input_dat, y, controlist = list(), intput_dat = NULL)
 
 dmr_case_control_cov(input_dat, y, cov.mod = NULL, controlist = list(),
@@ -29,13 +37,33 @@ methylation column per sample.}
 \item{y}{Study-design response data. For DMR functions, the first column is a
 binary group or state coded 0 and 1. For AMR functions, the first column is a
 numeric continuous phenotype.}
+\item{data}{Study structure for the main entry points. For \code{mr_bi()},
+choose \code{"independent"}, \code{"paired"}, or \code{"longitudinal"}.
+For \code{mr_continuous()}, choose \code{"independent"} or
+\code{"longitudinal"}.}
 \item{controlist}{Optional list of segmentation controls. Missing entries are
 filled from MethylRegion defaults.}
 \item{intput_dat}{Deprecated misspelling retained for compatibility with the
 original AMRfinder prototypes.}
-\item{cov.mod}{Optional data frame of sample-level covariates.}
+\item{cov.mod}{Optional data frame of sample-level covariates. Main entry
+points use \code{is.null(cov.mod)} to select no-covariate versus
+covariate-aware branches where both branches exist.}
 }
 \details{
+\code{mr_bi()} is the main entry point for binary phenotypes. With
+\code{data = "independent"}, \code{cov.mod = NULL} dispatches to
+\code{dmr_case_control()} and non-\code{NULL} \code{cov.mod} dispatches to
+\code{dmr_case_control_cov()}. With \code{data = "paired"},
+\code{cov.mod = NULL} dispatches to \code{dmr_paired()}; paired binary designs
+with covariates are not implemented yet. Binary longitudinal designs are also
+not implemented yet.
+
+\code{mr_continuous()} is the main entry point for continuous phenotypes. With
+\code{data = "independent"}, it dispatches to \code{amr_continuous()}. With
+\code{data = "longitudinal"}, it dispatches to \code{amr_longitudinal()}.
+\code{cov.mod} may be \code{NULL} or a covariate data frame in both continuous
+branches.
+
 \code{dmr_case_control()} handles independent binary case-control comparisons
 without covariates using the 2D-KS/Mann-Whitney branch.
 
@@ -68,10 +96,12 @@ dat <- data.frame(
   sample4 = c(0.7, 0.8, 0.8, 0.1, 0.2, 0.2)
 )
 y_bin <- data.frame(group = c(0, 0, 1, 1))
-res <- dmr_case_control(dat, y_bin, controlist = list(mincpgs = 2, trend = 0))
+res <- mr_bi(dat, y_bin, data = "independent",
+  controlist = list(mincpgs = 2, trend = 0))
 
 y_cont <- data.frame(phenotype = c(1, 2, 4, 5))
-res2 <- amr_continuous(dat, y_cont, controlist = list(mincpgs = 2, trend = 0))
+res2 <- mr_continuous(dat, y_cont, data = "independent",
+  controlist = list(mincpgs = 2, trend = 0))
 }
 \keyword{models}
 \keyword{htest}

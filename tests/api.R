@@ -5,6 +5,8 @@ stopifnot(is.function(dmr_case_control_cov))
 stopifnot(is.function(dmr_paired))
 stopifnot(is.function(amr_continuous))
 stopifnot(is.function(amr_longitudinal))
+stopifnot(is.function(mr_bi))
+stopifnot(is.function(mr_continuous))
 
 bad_dat <- data.frame(sample1 = 0.1, sample2 = 0.2)
 err <- try(dmr_case_control(bad_dat, data.frame(group = c(0, 1))), silent = TRUE)
@@ -35,11 +37,23 @@ results <- list(
   dmr_case_control_cov = dmr_case_control_cov(dat, binary_y, cov.mod = covariates, controlist = control),
   dmr_paired = dmr_paired(dat, paired_y, controlist = control),
   amr_continuous = amr_continuous(dat, continuous_y, controlist = control),
-  amr_longitudinal = amr_longitudinal(dat, long_y, controlist = control)
+  amr_longitudinal = amr_longitudinal(dat, long_y, controlist = control),
+  mr_bi_independent = mr_bi(dat, binary_y, data = "independent", controlist = control),
+  mr_bi_independent_cov = mr_bi(dat, binary_y, data = "independent", cov.mod = covariates, controlist = control),
+  mr_bi_paired = mr_bi(dat, paired_y, data = "paired", controlist = control),
+  mr_continuous_independent = mr_continuous(dat, continuous_y, data = "independent", controlist = control),
+  mr_continuous_longitudinal = mr_continuous(dat, long_y, data = "longitudinal", controlist = control)
 )
 
 stopifnot(all(vapply(results, function(x) is.null(x) || is.data.frame(x), logical(1))))
 
-for (name in setdiff(names(results), "dmr_case_control")) {
+e_value_methods <- c("dmr_case_control", "mr_bi_independent")
+for (name in setdiff(names(results), e_value_methods)) {
   stopifnot(!any(c("e_value", "e_adjust", "e_bh_significant") %in% names(results[[name]])))
 }
+
+paired_cov_err <- try(mr_bi(dat, paired_y, data = "paired", cov.mod = covariates), silent = TRUE)
+stopifnot(inherits(paired_cov_err, "try-error"))
+
+binary_longitudinal_err <- try(mr_bi(dat, binary_y, data = "longitudinal"), silent = TRUE)
+stopifnot(inherits(binary_longitudinal_err, "try-error"))
