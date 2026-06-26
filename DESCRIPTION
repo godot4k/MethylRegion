@@ -19,5 +19,7 @@ Encoding: UTF-8
 Depends: R (>= 4.0.0)
 Imports:
     stats
+Suggests:
+    lmerTest
 URL: https://github.com/godot4k/MethylRegion
 BugReports: https://github.com/godot4k/MethylRegion/issues

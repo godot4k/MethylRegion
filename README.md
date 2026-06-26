@@ -24,8 +24,8 @@ For `mr_bi()`:
 | `"independent"` | `NULL` | `dmr_case_control()` |
 | `"independent"` | non-`NULL` | `dmr_case_control_cov()` |
 | `"paired"` | `NULL` | `dmr_paired()` |
-| `"paired"` | non-`NULL` | Not implemented yet; throws an explicit error. |
-| `"longitudinal"` | `NULL` or non-`NULL` | Not implemented yet; throws an explicit error. |
+| `"paired"` | non-`NULL` | `dmr_longitudinal()` |
+| `"longitudinal"` | `NULL` or non-`NULL` | `dmr_longitudinal()` |
 
 For `mr_continuous()`:
 
@@ -41,11 +41,16 @@ For `mr_continuous()`:
 | `dmr_case_control()` | Independent case-control | Binary | No | `dmr.no.cov.2dks-mwu` |
 | `dmr_case_control_cov()` | Independent case-control | Binary | Yes | `dmr.with.cov.lm` |
 | `dmr_paired()` | Pre/post treatment or paired case-control | Binary | No | `dmr.no.cov.2dks-paired-wilcox` |
+| `dmr_longitudinal()` | Family-structured or longitudinal DMR | Binary | Yes/No | `dmr.with.cov.lm` plus mixed-model region test |
 | `amr_continuous()` | Independent EWAS / phenotype association | Continuous | Yes/No | `main` |
 | `amr_longitudinal()` | Longitudinal or repeated-measure AMR | Continuous | Yes/No | `dmr.with.cov.lm.phenotype-model` |
 
-`amr_longitudinal()` currently supports continuous phenotypes only. It does not
-support discrete or binary phenotypes.
+`dmr_longitudinal()` uses a region-level linear mixed model for binary
+phenotypes. To fit the mixed model, provide a family-like identifier column in
+`y` or `cov.mod`; the core model is `meth ~ phenotype + (1 | family)`.
+Additional non-random covariates are included as fixed effects. If no suitable
+identifier column is available, the function falls back to a fixed-effect linear
+model. `amr_longitudinal()` supports continuous phenotypes only.
 
 ## Installation
 
@@ -87,8 +92,7 @@ y <- data.frame(group = c(0, 0, 1, 1))
 dmr <- mr_bi(
   input_dat,
   y,
-  data = "independent",
-  controlist = list(mincpgs = 2, trend = 0)
+  data = "independent"
 )
 ```
 
@@ -101,8 +105,7 @@ dmr_cov <- mr_bi(
   input_dat,
   y,
   data = "independent",
-  cov.mod = covariates,
-  controlist = list(mincpgs = 2, trend = 0)
+  cov.mod = covariates
 )
 ```
 
@@ -117,17 +120,23 @@ y_paired <- data.frame(
 dmr_prepost <- mr_bi(
   input_dat,
   y_paired,
-  data = "paired",
-  controlist = list(mincpgs = 2, trend = 0)
+  data = "paired"
 )
 ```
 
-Binary paired designs with `cov.mod` and binary longitudinal designs are not
-implemented yet:
+Binary longitudinal or family-structured DMR analysis:
 
 ```r
-try(mr_bi(input_dat, y_paired, data = "paired", cov.mod = covariates))
-try(mr_bi(input_dat, y, data = "longitudinal"))
+y_binary_long <- data.frame(
+  phenotype = c(0, 1, 0, 1),
+  family = c("f1", "f1", "f2", "f2")
+)
+
+dmr_long <- mr_bi(
+  input_dat,
+  y_binary_long,
+  data = "longitudinal"
+)
 ```
 
 Continuous phenotype AMR analysis:
@@ -138,8 +147,7 @@ y_continuous <- data.frame(phenotype = c(1.2, 2.0, 4.2, 5.1))
 amr <- mr_continuous(
   input_dat,
   y_continuous,
-  data = "independent",
-  controlist = list(mincpgs = 2, trend = 0)
+  data = "independent"
 )
 ```
 
@@ -155,17 +163,17 @@ y_long <- data.frame(
 amr_long <- mr_continuous(
   input_dat,
   y_long,
-  data = "longitudinal",
-  controlist = list(mincpgs = 2, trend = 0)
+  data = "longitudinal"
 )
 ```
 
 The lower-level branch-specific functions can still be called directly:
 
 ```r
-dmr_case_control(input_dat, y, controlist = list(mincpgs = 2, trend = 0))
+dmr_case_control(input_dat, y)
 dmr_case_control_cov(input_dat, y, cov.mod = covariates)
 dmr_paired(input_dat, y_paired)
+dmr_longitudinal(input_dat, y_binary_long)
 amr_continuous(input_dat, y_continuous)
 amr_longitudinal(input_dat, y_long)
 ```

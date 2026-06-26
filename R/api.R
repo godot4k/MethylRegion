@@ -72,7 +72,9 @@
 #'   `"longitudinal"`.
 #' @param cov.mod Optional data frame of sample-level covariates. For
 #'   `data = "independent"`, `NULL` dispatches to `dmr_case_control()` and
-#'   non-`NULL` dispatches to `dmr_case_control_cov()`.
+#'   non-`NULL` dispatches to `dmr_case_control_cov()`. For binary paired
+#'   designs with covariates and binary longitudinal designs, `mr_bi()`
+#'   dispatches to `dmr_longitudinal()`.
 #' @param controlist Optional list of segmentation controls.
 #' @param intput_dat Deprecated spelling retained for compatibility.
 #' @return A data frame of candidate methylation regions.
@@ -89,12 +91,12 @@ mr_bi <- function(input_dat, y, data = c("independent", "paired", "longitudinal"
 
   if (data == "paired") {
     if (!is.null(cov.mod)) {
-      stop("Binary paired designs with cov.mod are not implemented yet.", call. = FALSE)
+      return(dmr_longitudinal(input_dat, y, cov.mod = cov.mod, controlist = controlist, intput_dat = intput_dat))
     }
     return(dmr_paired(input_dat, y, controlist = controlist, intput_dat = intput_dat))
   }
 
-  stop("Binary longitudinal designs are not implemented yet.", call. = FALSE)
+  dmr_longitudinal(input_dat, y, cov.mod = cov.mod, controlist = controlist, intput_dat = intput_dat)
 }
 
 #' Detect methylation regions for a continuous phenotype
@@ -174,6 +176,30 @@ dmr_paired <- function(input_dat, y, controlist = list(), intput_dat = NULL) {
   input_dat <- .methylregion_input(input_dat, intput_dat)
   .methylregion_result(
     .dmr_paired_impl(input_dat, y, cov.mod = NULL, controlist = .methylregion_control(controlist))
+  )
+}
+
+#' Detect longitudinal DMRs for a binary phenotype
+#'
+#' `dmr_longitudinal()` tests a binary phenotype effect with a linear mixed
+#' model of the form `meth ~ phenotype + (1 | family)` when a family-like random
+#' effect column is available. Additional non-random columns in `y` or `cov.mod`
+#' are included as fixed effects, matching the model-building behavior of
+#' `amr_longitudinal()`. If mixed-model fitting is not available, the function
+#' falls back to a fixed-effect linear model.
+#'
+#' @param input_dat Data frame with `chr`, `pos`, and one methylation column per sample.
+#' @param y Data frame whose first column is the binary phenotype coded 0 and 1.
+#'   Include a family-like column such as `family` or `family_id` for the random
+#'   intercept.
+#' @param cov.mod Optional data frame of additional sample-level covariates.
+#' @param controlist Optional list of segmentation controls.
+#' @param intput_dat Deprecated spelling retained for compatibility.
+#' @return A data frame of candidate methylation regions.
+dmr_longitudinal <- function(input_dat, y, cov.mod = NULL, controlist = list(), intput_dat = NULL) {
+  input_dat <- .methylregion_input(input_dat, intput_dat)
+  .methylregion_result(
+    .dmr_longitudinal_impl(input_dat, y, cov.mod = cov.mod, controlist = .methylregion_control(controlist))
   )
 }
 
