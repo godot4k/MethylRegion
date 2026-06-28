@@ -2,11 +2,9 @@
 
 **MethylRegion: A unified framework for differential methylation regions across designs, traits, and covariates**
 
-MethylRegion consolidates the AMRfinder development branches into one R package
-with a small, design-oriented API. The recommended entry points are
+The recommended entry points are
 `mr_bi()` for binary phenotypes and `mr_continuous()` for continuous
-phenotypes. The original branch-specific functions remain exported for direct
-use and backward compatibility.
+phenotypes. 
 
 ## Functions
 
@@ -178,14 +176,3 @@ amr_continuous(input_dat, y_continuous)
 amr_longitudinal(input_dat, y_long)
 ```
 
-## Output notes
-
-`dmr_case_control()` and therefore `mr_bi(data = "independent", cov.mod = NULL)`
-retain the current e-value output columns. Other current branches do not compute
-or report `e_value`, `e_adjust`, or `e_bh_significant`.
-
-## Development notes
-
-The main entry points provide a stable user-facing API. The branch-specific
-functions intentionally preserve their own statistics and output columns so the
-original prototype behavior remains available inside one package namespace.
