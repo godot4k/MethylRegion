@@ -3,29 +3,29 @@
 
 | Entry point | Arguments | Implementation branch |
 | --- | --- | --- |
-| `mr_bi()` | `data = "independent"`, `cov.mod = NULL` | `dmr_case_control()` |
-| `mr_bi()` | `data = "independent"`, `cov.mod` non-`NULL` | `dmr_case_control_cov()` |
-| `mr_bi()` | `data = "paired"`, `cov.mod = NULL` | `dmr_paired()` |
-| `mr_bi()` | `data = "paired"`, `cov.mod` non-`NULL` | `dmr_longitudinal()` |
-| `mr_bi()` | `data = "longitudinal"` | `dmr_longitudinal()` |
-| `mr_continuous()` | `data = "independent"` | `amr_continuous()` |
-| `mr_continuous()` | `data = "longitudinal"` | `amr_longitudinal()` |
+| `mr_bi()` | `data.type = "independent"`, `cov.mod = NULL` | `dmr_case_control()` |
+| `mr_bi()` | `data.type = "independent"`, `cov.mod` non-`NULL` | `dmr_case_control_cov()` |
+| `mr_bi()` | `data.type = "paired"`, `cov.mod = NULL` | `dmr_paired()` |
+| `mr_bi()` | `data.type = "paired"`, `cov.mod` non-`NULL` | `dmr_longitudinal()` |
+| `mr_bi()` | `data.type = "longitudinal"` | `dmr_longitudinal()` |
+| `mr_continuous()` | `data.type = "independent"` | `amr_continuous()` |
+| `mr_continuous()` | `data.type = "longitudinal"` | `amr_longitudinal()` |
 
-The dispatch depends only on `data` and whether `cov.mod` is `NULL`. It does
+The dispatch depends only on `data.type` and whether `cov.mod` is `NULL`. It does
 not depend on the balance of 0/1 labels in `y`.
 
 ## Output Columns By Branch
 
 | Entry point | Controls / dispatch | Columns, in return order |
 | --- | --- | --- |
-| `mr_bi(...)` | `data = "independent"`, `cov.mod = NULL` | `chr`, `start`, `end`, `N.CpGs`, `ks_stat`, `mean_diff`, `p_value`, `methX`, `methY`, `e_value`, `FDR`, `e_adjust` |
-| `mr_bi(...)` | `data = "paired"`, `cov.mod = NULL` | `chr`, `start`, `end`, `N.CpGs`, `ks_stat`, `mean_diff`, `p_value`, `methX`, `methY`, `FDR` |
-| `mr_bi(...)` | `data = "independent"`, `cov.mod` non-`NULL` | `chr`, `start`, `end`, `N.CpGs`, `cor_est`, `coef_lm_group`, `p_value`, `methX`, `methY`, `FDR` |
-| `mr_bi(...)` | `data = "paired"`, `cov.mod` non-`NULL`; or `data = "longitudinal"` | `chr`, `start`, `end`, `N.CpGs`, `cor_est`, `coef_lmm`, `p_value`, `methX`, `methY`, `FDR` |
-| `mr_continuous(...)` | `data = "independent"` | `chr`, `start`, `end`, `N.CpGs`, `cor_est`, `coef_lm`, `p_value`, `methX`, `methY`, `FDR` |
-| `mr_continuous(...)` | `data = "longitudinal"` | `chr`, `start`, `end`, `N.CpGs`, `cor_est`, `coef_meth`, `p_value`, `methX`, `methY`, `FDR` |
+| `mr_bi(...)` | `data.type = "independent"`, `cov.mod = NULL` | `chr`, `start`, `end`, `N.CpGs`, `ks_stat`, `mean_diff`, `p_value`, `methX`, `methY`, `e_value`, `FDR`, `e_adjust` |
+| `mr_bi(...)` | `data.type = "paired"`, `cov.mod = NULL` | `chr`, `start`, `end`, `N.CpGs`, `ks_stat`, `mean_diff`, `p_value`, `methX`, `methY`, `FDR` |
+| `mr_bi(...)` | `data.type = "independent"`, `cov.mod` non-`NULL` | `chr`, `start`, `end`, `N.CpGs`, `cor_est`, `coef_lm_group`, `p_value`, `methX`, `methY`, `FDR` |
+| `mr_bi(...)` | `data.type = "paired"`, `cov.mod` non-`NULL`; or `data.type = "longitudinal"` | `chr`, `start`, `end`, `N.CpGs`, `cor_est`, `coef_lmm`, `p_value`, `methX`, `methY`, `FDR` |
+| `mr_continuous(...)` | `data.type = "independent"` | `chr`, `start`, `end`, `N.CpGs`, `cor_est`, `coef_lm`, `p_value`, `methX`, `methY`, `FDR` |
+| `mr_continuous(...)` | `data.type = "longitudinal"` | `chr`, `start`, `end`, `N.CpGs`, `cor_est`, `coef_meth`, `p_value`, `methX`, `methY`, `FDR` |
 
-Only `mr_bi(..., data = "independent", cov.mod = NULL)` returns e-value columns (`e_value`, `e_adjust`).
+Only `mr_bi(..., data.type = "independent", cov.mod = NULL)` returns e-value columns (`e_value`, `e_adjust`).
 The other entry-point configurations do not currently return `e_value` or `e_adjust`.
 
 ## Column Meaning
@@ -62,7 +62,7 @@ library(MethylRegion)
 bulk.independent.data <- readRDS("./TestData/bulk.sub.txt.20.Rds")
 y <- data.frame(y = rpois(20, 50))
 cov.mod <- NULL
-nfo <- mr_continuous(bulk.independent.data, y, "independent", cov.mod)
+nfo <- mr_continuous(bulk.independent.data, y, data.type = "independent", cov.mod = cov.mod)
 ```
 
 The results is as following:
@@ -84,7 +84,7 @@ library(MethylRegion)
 bulk.independent.data <- readRDS("./TestData/bulk.sub.txt.20.Rds")
 y <- data.frame(y = rpois(20, 50))
 cov.mod <- NULL
-nfo <- mr_continuous(bulk.independent.data, y, "independent", cov.mod)
+nfo <- mr_continuous(bulk.independent.data, y, data.type = "independent", cov.mod = cov.mod)
 ```
 
 The Result is as following:

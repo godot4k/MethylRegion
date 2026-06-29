@@ -41,13 +41,13 @@ results <- list(
   dmr_longitudinal = dmr_longitudinal(dat, binary_long_y, controlist = control),
   amr_continuous = amr_continuous(dat, continuous_y, controlist = control),
   amr_longitudinal = amr_longitudinal(dat, long_y, controlist = control),
-  mr_bi_independent = mr_bi(dat, binary_y, data = "independent", controlist = control),
-  mr_bi_independent_cov = mr_bi(dat, binary_y, data = "independent", cov.mod = covariates, controlist = control),
-  mr_bi_paired = mr_bi(dat, paired_y, data = "paired", controlist = control),
-  mr_bi_paired_cov = mr_bi(dat, paired_y, data = "paired", cov.mod = covariates, controlist = control),
-  mr_bi_longitudinal = mr_bi(dat, binary_long_y, data = "longitudinal", controlist = control),
-  mr_continuous_independent = mr_continuous(dat, continuous_y, data = "independent", controlist = control),
-  mr_continuous_longitudinal = mr_continuous(dat, long_y, data = "longitudinal", controlist = control)
+  mr_bi_independent = mr_bi(dat, binary_y, data.type = "independent", controlist = control),
+  mr_bi_independent_cov = mr_bi(dat, binary_y, data.type = "independent", cov.mod = covariates, controlist = control),
+  mr_bi_paired = mr_bi(dat, paired_y, data.type = "paired", controlist = control),
+  mr_bi_paired_cov = mr_bi(dat, paired_y, data.type = "paired", cov.mod = covariates, controlist = control),
+  mr_bi_longitudinal = mr_bi(dat, binary_long_y, data.type = "longitudinal", controlist = control),
+  mr_continuous_independent = mr_continuous(dat, continuous_y, data.type = "independent", controlist = control),
+  mr_continuous_longitudinal = mr_continuous(dat, long_y, data.type = "longitudinal", controlist = control)
 )
 
 stopifnot(all(vapply(results, function(x) is.null(x) || is.data.frame(x), logical(1))))
@@ -58,7 +58,7 @@ for (name in setdiff(names(results), e_value_methods)) {
 }
 
 mixed_control <- list(mincpgs = 2, trend = 0)
-mixed_res <- mr_bi(dat, binary_long_y, data = "longitudinal", controlist = mixed_control)
+mixed_res <- mr_bi(dat, binary_long_y, data.type = "longitudinal", controlist = mixed_control)
 stopifnot(is.data.frame(mixed_res))
 if (nrow(mixed_res) > 0) {
   stopifnot(all(c("coef_lmm", "p_value", "FDR") %in% names(mixed_res)))

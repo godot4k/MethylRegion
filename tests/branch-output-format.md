@@ -8,15 +8,15 @@ small example calls from `tests/api.R`.
 
 | Entry point | Arguments | Implementation branch |
 | --- | --- | --- |
-| `mr_bi()` | `data = "independent"`, `cov.mod = NULL` | `dmr_case_control()` |
-| `mr_bi()` | `data = "independent"`, `cov.mod` non-`NULL` | `dmr_case_control_cov()` |
-| `mr_bi()` | `data = "paired"`, `cov.mod = NULL` | `dmr_paired()` |
-| `mr_bi()` | `data = "paired"`, `cov.mod` non-`NULL` | `dmr_longitudinal()` |
-| `mr_bi()` | `data = "longitudinal"` | `dmr_longitudinal()` |
-| `mr_continuous()` | `data = "independent"` | `amr_continuous()` |
-| `mr_continuous()` | `data = "longitudinal"` | `amr_longitudinal()` |
+| `mr_bi()` | `data.type = "independent"`, `cov.mod = NULL` | `dmr_case_control()` |
+| `mr_bi()` | `data.type = "independent"`, `cov.mod` non-`NULL` | `dmr_case_control_cov()` |
+| `mr_bi()` | `data.type = "paired"`, `cov.mod = NULL` | `dmr_paired()` |
+| `mr_bi()` | `data.type = "paired"`, `cov.mod` non-`NULL` | `dmr_longitudinal()` |
+| `mr_bi()` | `data.type = "longitudinal"` | `dmr_longitudinal()` |
+| `mr_continuous()` | `data.type = "independent"` | `amr_continuous()` |
+| `mr_continuous()` | `data.type = "longitudinal"` | `amr_longitudinal()` |
 
-The dispatch depends only on `data` and whether `cov.mod` is `NULL`. It does
+The dispatch depends only on `data.type` and whether `cov.mod` is `NULL`. It does
 not depend on the balance of 0/1 labels in `y`.
 
 ## Output Columns By Branch

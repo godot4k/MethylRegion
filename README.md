@@ -19,82 +19,56 @@ R CMD INSTALL MethylRegion
 
 ## Main Entry Points
 
-| Function | Phenotype | `data` values | Covariate dispatch |
+| Function | Phenotype | `data.type` values | Covariate dispatch |
 | --- | --- | --- | --- |
-| `mr_bi()` | Binary | `"independent"`, `"paired"`, `"longitudinal"` | Uses `is.null(cov.mod)` to choose no-covariate versus covariate-aware branches where implemented. |
-| `mr_continuous()` | Continuous | `"independent"`, `"longitudinal"` | Passes `cov.mod` through; it may be `NULL` or a covariate data frame. |
-
-## Wrapper Dispatch
-
-| Entry point | Arguments | Implementation branch |
-| --- | --- | --- |
-| `mr_bi()` | `data = "independent"`, `cov.mod = NULL` | `dmr_case_control()` |
-| `mr_bi()` | `data = "independent"`, `cov.mod` non-`NULL` | `dmr_case_control_cov()` |
-| `mr_bi()` | `data = "paired"`, `cov.mod = NULL` | `dmr_paired()` |
-| `mr_bi()` | `data = "paired"`, `cov.mod` non-`NULL` | `dmr_longitudinal()` |
-| `mr_bi()` | `data = "longitudinal"` | `dmr_longitudinal()` |
-| `mr_continuous()` | `data = "independent"` | `amr_continuous()` |
-| `mr_continuous()` | `data = "longitudinal"` | `amr_longitudinal()` |
-
-The dispatch depends only on `data` and whether `cov.mod` is `NULL`. It does
-not depend on the balance of 0/1 labels in `y`.
+| `mr_bi(input_dat, y, data.type, cov.mod)` | Binary | `"independent"`, `"paired"`, `"longitudinal"` | Uses `is.null(cov.mod)` to choose no-covariate versus covariate-aware branches where implemented. |
+| `mr_continuous(input_dat, y, data.type, cov.mod)` | Continuous | `"independent"`, `"longitudinal"` | Passes `cov.mod` through; it may be `NULL` or a covariate data frame. |
 
 ## Input File Requirements
 
-The example data used in `tests/readme_more.md` is
-`tests/TestData/bulk.sub.txt.20.Rds`. It is a methylation matrix with 19,482
-CpG rows and 22 columns: `chr`, `pos`, and 20 sample columns (`S1` to `S20`).
-
 ### Methylation Matrix: `input_dat`
 
-| Column | Required | Type | Description |
-| --- | --- | --- | --- |
-| `chr` | Yes | Character | Chromosome label for each CpG site. |
-| `pos` | Yes | Integer or numeric | Genomic coordinate for each CpG site. Rows should be ordered by chromosome and position. |
-| Sample columns | Yes | Numeric | One methylation column per sample. Values should be methylation proportions or beta values, typically in `[0, 1]`. |
+| Column | Type | Description |
+| --- | --- | --- |
+| `chr` | Character | Chromosome label for each CpG site. |
+| `pos` | Integer or numeric | Genomic coordinate for each CpG site. Rows should be ordered by chromosome and position. |
+| Sample columns | Numeric | One methylation column per sample. Values should be methylation proportions or beta values, typically in `[0, 1]`. |
 
-Sample columns must be in the same order as rows in `y` and `cov.mod`. For the
-example data, `ncol(input_dat) - 2` is 20, so `nrow(y)` and `nrow(cov.mod)`,
-when provided, should also be 20.
+Sample columns must be in the same order as rows in `y` and `cov.mod`.
 
 ### Phenotype Table: `y`
 
-| Entry point | `data` | Required columns in `y` | Requirements |
-| --- | --- | --- | --- |
-| `mr_bi()` | `"independent"` | First column: binary group | Controls must be coded `0`; cases/tests must be coded `1`. |
-| `mr_bi()` | `"paired"` | First column: binary state; optional `pair_id` | Binary state must be coded `0` and `1`. Include `pair_id` for paired Wilcoxon testing. |
-| `mr_bi()` | `"longitudinal"` | First column: binary phenotype; recommended family/subject column | Binary phenotype must be coded `0` and `1`. A family-like identifier such as `family`, `family_id`, or `subject_id` enables random-intercept modeling. |
-| `mr_continuous()` | `"independent"` | First column: continuous phenotype | Numeric phenotype values, one row per sample. |
-| `mr_continuous()` | `"longitudinal"` | First column: continuous phenotype; recommended subject column | Numeric phenotype values. A subject-like identifier such as `subject_id` enables longitudinal modeling. |
+| Entry point | `data.type` | Requirements |
+| --- | --- | --- |
+| `mr_bi()` | `"independent"` | One column: binary group. Controls should be coded `0`; cases/tests should be coded `1`. |
+| `mr_bi()` | `"paired"` | Two columns: binary state and optional `pair_id`. Binary state should be coded `0` and `1`. Include `pair_id` for paired analysis. |
+| `mr_bi()` | `"longitudinal"` | Two columns: binary phenotype and a subject/family column. Binary phenotype should be coded `0` and `1`. A family-like identifier such as `family`, `family_id`, or `subject_id` enables random-intercept modeling. |
+| `mr_continuous()` | `"independent"` | One column: continuous phenotype. Numeric phenotype values, one row per sample. |
+| `mr_continuous()` | `"longitudinal"` | Two columns: continuous phenotype and a subject column. Use numeric phenotype values. A subject-like identifier such as `subject_id` enables longitudinal modeling. |
 
 ### Covariate Table: `cov.mod`
 
 | Argument | Required | Type | Description |
 | --- | --- | --- | --- |
 | `cov.mod = NULL` | No | `NULL` | Runs the no-covariate branch where available. |
-| `cov.mod` non-`NULL` | Optional | Data frame | One row per sample. Columns are sample-level covariates such as age, sex, batch, visit, family, or subject identifiers. |
+| `cov.mod` non-`NULL` | Optional | Data frame | One row per sample. Columns are sample-level covariates such as age, gender, or batch. |
 
-For `mr_bi(..., data = "independent")`, a non-`NULL` `cov.mod` selects the
-covariate-adjusted linear-model branch and reports `coef_lm_group`. For
-`mr_bi(..., data = "paired")`, a non-`NULL` `cov.mod` dispatches to the
-longitudinal binary branch.
+## Output Columns Description
 
-## Output Columns By Branch
-
-| Entry point | Controls / dispatch | Columns, in return order |
+| Entry point | Controls | Columns in results |
 | --- | --- | --- |
-| `mr_bi(...)` | `data = "independent"`, `cov.mod = NULL` | `chr`, `start`, `end`, `N.CpGs`, `ks_stat`, `mean_diff`, `p_value`, `methX`, `methY`, `e_value`, `FDR`, `e_adjust` |
-| `mr_bi(...)` | `data = "paired"`, `cov.mod = NULL` | `chr`, `start`, `end`, `N.CpGs`, `ks_stat`, `mean_diff`, `p_value`, `methX`, `methY`, `FDR` |
-| `mr_bi(...)` | `data = "independent"`, `cov.mod` non-`NULL` | `chr`, `start`, `end`, `N.CpGs`, `cor_est`, `coef_lm_group`, `p_value`, `methX`, `methY`, `FDR` |
-| `mr_bi(...)` | `data = "paired"`, `cov.mod` non-`NULL`; or `data = "longitudinal"` | `chr`, `start`, `end`, `N.CpGs`, `cor_est`, `coef_lmm`, `p_value`, `methX`, `methY`, `FDR` |
-| `mr_continuous(...)` | `data = "independent"` | `chr`, `start`, `end`, `N.CpGs`, `cor_est`, `coef_lm`, `p_value`, `methX`, `methY`, `FDR` |
-| `mr_continuous(...)` | `data = "longitudinal"` | `chr`, `start`, `end`, `N.CpGs`, `cor_est`, `coef_meth`, `p_value`, `methX`, `methY`, `FDR` |
+| `mr_bi(...)` | `data.type = "independent"`, `cov.mod = NULL` | `chr`, `start`, `end`, `N.CpGs`, `ks_stat`, `mean_diff`, `p_value`, `methX`, `methY`, `e_value`, `FDR`, `e_adjust` |
+| `mr_bi(...)` | `data.type = "paired"`, `cov.mod = NULL` | `chr`, `start`, `end`, `N.CpGs`, `ks_stat`, `mean_diff`, `p_value`, `methX`, `methY`, `FDR` |
+| `mr_bi(...)` | `data.type = "independent"`, `cov.mod` non-`NULL` | `chr`, `start`, `end`, `N.CpGs`, `cor_est`, `coef_lm_group`, `p_value`, `methX`, `methY`, `FDR` |
+| `mr_bi(...)` | `data.type = "paired"`, `cov.mod` non-`NULL`; or `data.type = "longitudinal"` | `chr`, `start`, `end`, `N.CpGs`, `cor_est`, `coef_lmm`, `p_value`, `methX`, `methY`, `FDR` |
+| `mr_continuous(...)` | `data.type = "independent"` | `chr`, `start`, `end`, `N.CpGs`, `cor_est`, `coef_lm`, `p_value`, `methX`, `methY`, `FDR` |
+| `mr_continuous(...)` | `data.type = "longitudinal"` | `chr`, `start`, `end`, `N.CpGs`, `cor_est`, `coef_meth`, `p_value`, `methX`, `methY`, `FDR` |
 
-Only `mr_bi(..., data = "independent", cov.mod = NULL)` returns e-value
+> Only `mr_bi(..., data.type = "independent", cov.mod = NULL)` returns e-value
 columns (`e_value`, `e_adjust`). The other entry-point configurations do not
 currently return `e_value` or `e_adjust`.
 
-## Column Meaning
+### Column Meaning
 
 | Column | Meaning |
 | --- | --- |
@@ -112,13 +86,25 @@ currently return `e_value` or `e_adjust`.
 | `p_value` | The methylation P value derived from the branch-specific statistical test. |
 | `methX` | Mean DNA methylation level within each region across all samples. |
 | `methY` | Mean phenotype value within each region across all samples. |
-| `e_value` | E value against null hypothesis. |
-| `FDR` | False discovery rate adjusted P value using BH approach. |
-| `e_adjust` | Adjusted E value using BH approach. |
+| `e_value` | E-value against the null hypothesis. |
+| `FDR` | False discovery rate-adjusted P value using the BH approach. |
+| `e_adjust` | Adjusted E-value using the BH approach. |
 
-## Example Result Tables
+## Demo in Application Scenarios
 
 ### Binary Phenotype, Independent Samples
+
+For differentially methylated region (DMRs) analysis without covariates in case/control data, the following code performs a calculation with a simple simulation setting.
+
+```{R}
+library(MethylRegion)
+bulk.independent.data <- readRDS("./TestData/bulk.sub.txt.20.Rds")
+y <- data.frame(y = rbinom(20, 1, 0.5))
+cov.mod <- NULL
+nfo <- mr_bi(bulk.independent.data, y, data.type = "independent", cov.mod = cov.mod)
+```
+
+The result is as follows:
 
 | chr | start | end | N.CpGs | ks_stat | mean_diff | p_value | methX | methY | e_value | FDR | e_adjust |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -129,7 +115,21 @@ currently return `e_value` or `e_adjust`.
 | chr21 | 9825669 | 9825796 | 20 | 0.13636363636363638 | 0.044960734639017896 | 0.006798019357858196 | 0.3521189578815905 | 0.55 | 37.4086016046296 | 0.05321878011580416 | 10.512636217359415 |
 | chr21 | 9825827 | 9825874 | 10 | 0.12424242424242424 | -0.0127511118284514 | 0.3006328633307783 | 0.36266710358403925 | 0.55 | 2.312619148092159 | 0.4268052049359236 | 1.4016335732545946 |
 
+A detailed description of the output columns is provided in the `Column Meaning` section above.
+
 ### Continuous Phenotype, Independent Samples
+
+For associated methylated regions (AMRs) analysis between phenotype and CpGs  without covariates in independent samples, the following code performs a calculation with a simple simulation setting.
+
+```{R}
+library(MethylRegion)
+bulk.independent.data <- readRDS("./TestData/bulk.sub.txt.20.Rds")
+y <- data.frame(y = rpois(20, 50))
+cov.mod <- NULL
+nfo <- mr_continuous(bulk.independent.data, y, data.type = "independent", cov.mod = cov.mod)
+```
+
+The result is as follows:
 
 | chr | start | end | N.CpGs | cor_est | coef_lm | p_value | methX | methY | FDR |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -139,3 +139,5 @@ currently return `e_value` or `e_adjust`.
 | chr21 | 9825717 | 9825748 | 5 | -0.21321161332966002 | -8.368715083755447 | 0.05757684713137738 | 0.28239092437323654 | 50.35 | 0.283943371021882 |
 | chr21 | 9825756 | 9825793 | 5 | -0.4323876130982823 | -44.66298790221596 | 0.056907389515607094 | 0.31143659569301807 | 50.35 | 0.283943371021882 |
 | chr21 | 9825795 | 9825871 | 15 | -0.3893348273742662 | -36.74142259281716 | 0.0897434344126131 | 0.32038108918764824 | 50.35 | 0.302336581767808 |
+
+A detailed description of the output columns is also provided in the `Column Meaning` section above.

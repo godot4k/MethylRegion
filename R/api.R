@@ -60,7 +60,7 @@
 
 #' Detect methylation regions for a binary phenotype
 #'
-#' `mr_bi()` is the main entry point for binary phenotype designs. The `data`
+#' `mr_bi()` is the main entry point for binary phenotype designs. The `data.type`
 #' argument selects the study structure, while `cov.mod = NULL` versus a
 #' non-`NULL` covariate data frame determines whether a covariate-adjusted
 #' branch is used when that branch exists.
@@ -68,28 +68,28 @@
 #' @param input_dat Data frame with `chr`, `pos`, and one methylation column per sample.
 #' @param y Data frame, matrix, or vector whose first column is the binary group
 #'   or state indicator coded as 0 and 1.
-#' @param data Study structure. One of `"independent"`, `"paired"`, or
+#' @param data.type Study structure. One of `"independent"`, `"paired"`, or
 #'   `"longitudinal"`.
 #' @param cov.mod Optional data frame of sample-level covariates. For
-#'   `data = "independent"`, `NULL` dispatches to `dmr_case_control()` and
+#'   `data.type = "independent"`, `NULL` dispatches to `dmr_case_control()` and
 #'   non-`NULL` dispatches to `dmr_case_control_cov()`. For binary paired
 #'   designs with covariates and binary longitudinal designs, `mr_bi()`
 #'   dispatches to `dmr_longitudinal()`.
 #' @param controlist Optional list of segmentation controls.
 #' @param intput_dat Deprecated spelling retained for compatibility.
 #' @return A data frame of candidate methylation regions.
-mr_bi <- function(input_dat, y, data = c("independent", "paired", "longitudinal"),
+mr_bi <- function(input_dat, y, data.type = c("independent", "paired", "longitudinal"),
                   cov.mod = NULL, controlist = list(), intput_dat = NULL) {
-  data <- match.arg(data)
+  data.type <- match.arg(data.type)
 
-  if (data == "independent") {
+  if (data.type == "independent") {
     if (is.null(cov.mod)) {
       return(dmr_case_control(input_dat, y, controlist = controlist, intput_dat = intput_dat))
     }
     return(dmr_case_control_cov(input_dat, y, cov.mod = cov.mod, controlist = controlist, intput_dat = intput_dat))
   }
 
-  if (data == "paired") {
+  if (data.type == "paired") {
     if (!is.null(cov.mod)) {
       return(dmr_longitudinal(input_dat, y, cov.mod = cov.mod, controlist = controlist, intput_dat = intput_dat))
     }
@@ -102,22 +102,22 @@ mr_bi <- function(input_dat, y, data = c("independent", "paired", "longitudinal"
 #' Detect methylation regions for a continuous phenotype
 #'
 #' `mr_continuous()` is the main entry point for continuous phenotype designs.
-#' The `data` argument selects independent versus longitudinal/repeated-measure
+#' The `data.type` argument selects independent versus longitudinal/repeated-measure
 #' analyses. `cov.mod` is passed through and may be `NULL`.
 #'
 #' @param input_dat Data frame with `chr`, `pos`, and one methylation column per sample.
 #' @param y Data frame, matrix, or vector whose first column is a numeric
 #'   continuous phenotype.
-#' @param data Study structure. One of `"independent"` or `"longitudinal"`.
+#' @param data.type Study structure. One of `"independent"` or `"longitudinal"`.
 #' @param cov.mod Optional data frame of sample-level covariates.
 #' @param controlist Optional list of segmentation controls.
 #' @param intput_dat Deprecated spelling retained for compatibility.
 #' @return A data frame of candidate methylation regions.
-mr_continuous <- function(input_dat, y, data = c("independent", "longitudinal"),
+mr_continuous <- function(input_dat, y, data.type = c("independent", "longitudinal"),
                           cov.mod = NULL, controlist = list(), intput_dat = NULL) {
-  data <- match.arg(data)
+  data.type <- match.arg(data.type)
 
-  if (data == "independent") {
+  if (data.type == "independent") {
     return(amr_continuous(input_dat, y, cov.mod = cov.mod, controlist = controlist, intput_dat = intput_dat))
   }
 
