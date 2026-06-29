@@ -1,0 +1,11 @@
+﻿Output,Description
+chr,Chromosome
+start,The start position of a methylation region.
+end,The end position of a methylation region.
+N.CpGs,The number of CpG sites.
+cor_est,The estimated correlation coefficient.
+coef_lm,The methylation coefficient derived from linear regression analysis.
+p_value,The methylation P value derived from linear regression analysis.
+methX,Mean DNA methylation level within each region across all samples.
+methY,Mean phenotype value within each region across all samples.
+FDR,False discovery rate using BH approach.

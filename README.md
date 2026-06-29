@@ -48,10 +48,10 @@ Sample columns must be in the same order as rows in `y` and `cov.mod`.
 
 ### Covariate Table: `cov.mod`
 
-| Argument | Required | Type | Description |
-| --- | --- | --- | --- |
-| `cov.mod = NULL` | No | `NULL` | Runs the no-covariate branch where available. |
-| `cov.mod` non-`NULL` | Optional | Data frame | One row per sample. Columns are sample-level covariates such as age, gender, or batch. |
+| Argument  | Description |
+| --- | --- |
+| `cov.mod = NULL` | Runs the no-covariate branch where available. |
+| `cov.mod` non-`NULL` |  One row per sample. Columns are sample-level covariates such as age, gender, or batch. |
 
 ## Output Columns Description
 
