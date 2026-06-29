@@ -126,16 +126,16 @@ cortest <- function(intput_dat, y, method = "pearson", cov.mod = NULL, a, b) {
   )
   if (is.null(fit) || nrow(fit$coef) < 2) {
     p_value <- 1
-    coef_glm <- 0
+    coef_lm_group <- 0
   } else {
     p_value <- fit$coef[2, 4]
-    coef_glm <- fit$coef[2, 1]
+    coef_lm_group <- fit$coef[2, 1]
     if (!is.finite(p_value)) p_value <- 1
-    if (!is.finite(coef_glm)) coef_glm <- 0
+    if (!is.finite(coef_lm_group)) coef_lm_group <- 0
   }
   cor_est <- cor(lm.dat$group, lm.dat$meth, use = "complete.obs", method = method)
   if (!is.finite(cor_est)) cor_est <- 0
-  return(c(p_value, coef_glm, cor_est))
+  return(c(p_value, coef_lm_group, cor_est))
 }
 
 calcSingleDiffSum<-function(intput_dat,y){
@@ -212,7 +212,7 @@ segment_pSTKopt<-function(intput_dat,y,cov.mod,XS,a,b,chr,mincpgs,trend,valley,K
               child<-0
               ab[1]<--1
             }else{
-              bre<-list(chr=chr,start=n,stop=m,p_value=ks1[1],coef_glm=ks1[2],cor_est=ks1[3])
+              bre<-list(chr=chr,start=n,stop=m,p_value=ks1[1],coef_lm_group=ks1[2],cor_est=ks1[3])
               breaks<-rbind(breaks,data.frame(bre))
             }
           }
@@ -229,7 +229,7 @@ segment_pSTKopt<-function(intput_dat,y,cov.mod,XS,a,b,chr,mincpgs,trend,valley,K
               child<-0
               ab[1]<--1
             }else{
-              bre<-list(chr=chr,start=n,stop=m,p_value=ks2[1],coef_glm=ks2[2],cor_est=ks2[3])
+              bre<-list(chr=chr,start=n,stop=m,p_value=ks2[1],coef_lm_group=ks2[2],cor_est=ks2[3])
               breaks<-rbind(breaks,data.frame(bre))
             }
           }
@@ -246,14 +246,14 @@ segment_pSTKopt<-function(intput_dat,y,cov.mod,XS,a,b,chr,mincpgs,trend,valley,K
               child<-0
               ab[1]<--1
             }else{
-              bre<-list(chr=chr,start=n,stop=m,p_value=ks3[1],coef_glm=ks3[2],cor_est=ks3[3])
+              bre<-list(chr=chr,start=n,stop=m,p_value=ks3[1],coef_lm_group=ks3[2],cor_est=ks3[3])
               breaks<-rbind(breaks,data.frame(bre))
             }
           }
         }
       }else{
         if(child==0){
-          bre<-list(chr=chr,start=a,stop=b,p_value=KS[1],coef_glm=KS[2],cor_est=KS[3])
+          bre<-list(chr=chr,start=a,stop=b,p_value=KS[1],coef_lm_group=KS[2],cor_est=KS[3])
           breaks<-rbind(breaks,data.frame(bre))
         }
         a<--1
@@ -367,7 +367,7 @@ output<-function(intput_dat,y,cov.mod,XS,global,chr,mincpgs,trend,valley,method)
             ks<-cortest(intput_dat,y, method, cov.mod,tmp_start,tmp_stop)
           }
           if(ks[1]<2){
-            out<-data.frame(chr=chr,start=intput_dat$pos[tmp_start]-1,stop=intput_dat$pos[tmp_stop],q=-1,length=tmp_stop-tmp_start+1,cor_est = ks[3],coef_glm=ks[2],p_value=ks[1])
+            out<-data.frame(chr=chr,start=intput_dat$pos[tmp_start]-1,stop=intput_dat$pos[tmp_stop],q=-1,length=tmp_stop-tmp_start+1,cor_est = ks[3],coef_lm_group=ks[2],p_value=ks[1])
             methX <- mean(as.numeric(as.matrix(intput_dat[tmp_start:tmp_stop, -c(1, 2)])), na.rm = TRUE)
             methY <- mean(as.numeric(as.matrix(y)), na.rm = TRUE)
             out$methX<-methX
@@ -376,7 +376,7 @@ output<-function(intput_dat,y,cov.mod,XS,global,chr,mincpgs,trend,valley,method)
           }
           tmp<-NULL
         }
-        out<-data.frame(chr=chr,start=intput_dat$pos[b$start]-1,stop=intput_dat$pos[b$stop],q=-1,length=b$stop-b$start+1,cor_est =b$cor_est,coef_glm=b$coef_glm,p_value=b$p_value)
+        out<-data.frame(chr=chr,start=intput_dat$pos[b$start]-1,stop=intput_dat$pos[b$stop],q=-1,length=b$stop-b$start+1,cor_est =b$cor_est,coef_lm_group=b$coef_lm_group,p_value=b$p_value)
         methX <- mean(as.numeric(as.matrix(intput_dat[b$start:b$stop, -c(1, 2)])), na.rm = TRUE)
         methY <- mean(as.numeric(as.matrix(y)), na.rm = TRUE)
         out$methX<-methX
@@ -394,7 +394,7 @@ output<-function(intput_dat,y,cov.mod,XS,global,chr,mincpgs,trend,valley,method)
       ks<-cortest(intput_dat,y, method, cov.mod,tmp_start,tmp_stop)
     }
     if(ks[1]<2){
-      out<-data.frame(chr=chr,start=intput_dat$pos[tmp_start]-1,stop=intput_dat$pos[tmp_stop],q=-1,length=tmp_stop-tmp_start+1,cor_est = ks[3],coef_glm=ks[2],p_value=ks[1])
+      out<-data.frame(chr=chr,start=intput_dat$pos[tmp_start]-1,stop=intput_dat$pos[tmp_stop],q=-1,length=tmp_stop-tmp_start+1,cor_est = ks[3],coef_lm_group=ks[2],p_value=ks[1])
       methX <- mean(as.numeric(as.matrix(intput_dat[tmp_start:tmp_stop, -c(1, 2)])), na.rm = TRUE)
       methY <- mean(as.numeric(as.matrix(y)), na.rm = TRUE)
       out$methX<-methX
@@ -467,7 +467,7 @@ AMRfinder <- function(intput_dat, y, cov.mod = NULL, controlist = list(
       }
     }
   }
-  colnames(nfo$outputList)[-4] <- c("chr", "start", "end", "N.CpGs", "cor_est", "coef_glm", "p_value", "methX", "methY")
+  colnames(nfo$outputList)[-4] <- c("chr", "start", "end", "N.CpGs", "cor_est", "coef_lm_group", "p_value", "methX", "methY")
   nfo$outputList$FDR <- p.adjust(nfo$outputList$p_value, method = "BH")
   return(nfo$outputList[, -4])
 }
