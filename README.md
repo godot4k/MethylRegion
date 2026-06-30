@@ -40,9 +40,9 @@ Sample columns must be in the same order as rows in `y` and `cov.mod`.
 
 | Entry point | `data.type` | Requirements |
 | --- | --- | --- |
-| `mr_bi()` | `"independent"` | One column: binary group. Controls should be coded `0`; cases/tests should be coded `1`. |
-| `mr_bi()` | `"paired"` | Two columns: binary state and optional `pair_id`. Binary state should be coded `0` and `1`. Include `pair_id` for paired analysis. |
-| `mr_bi()` | `"longitudinal"` | Two columns: binary phenotype and a subject/family column. Binary phenotype should be coded `0` and `1`. A family-like identifier such as `family`, `family_id`, or `subject_id` enables random-intercept modeling. |
+| `mr_bi()` | `"independent"` | One column: binary group. Controls should be coded `0`; cases/tests should be coded `1`. If more than two groups are present, all pairwise group comparisons are run. |
+| `mr_bi()` | `"paired"` | Two columns: binary state and optional `pair_id`. Binary state should be coded `0` and `1`. Include `pair_id` for paired analysis. If more than two states are present, all pairwise state comparisons are run. |
+| `mr_bi()` | `"longitudinal"` | Two columns: binary phenotype and a subject/family column. Binary phenotype should be coded `0` and `1`. A family-like identifier such as `family`, `family_id`, or `subject_id` enables random-intercept modeling. If more than two phenotype groups are present, all pairwise group comparisons are run. |
 | `mr_continuous()` | `"independent"` | One column: continuous phenotype. Numeric phenotype values, one row per sample. |
 | `mr_continuous()` | `"longitudinal"` | Two columns: continuous phenotype and a subject column. Use numeric phenotype values. A subject-like identifier such as `subject_id` enables longitudinal modeling. |
 
@@ -67,6 +67,13 @@ Sample columns must be in the same order as rows in `y` and `cov.mod`.
 > Only `mr_bi(..., data.type = "independent", cov.mod = NULL)` returns e-value
 columns (`e_value`, `e_adjust`). The other entry-point configurations do not
 currently return `e_value` or `e_adjust`.
+
+For multi-group `mr_bi()` input, results from the pairwise runs are stacked in
+one data frame with leading columns `comparison`, `groupA`, and `groupB`. Each
+pair is analyzed independently, so branch-specific statistics such as `FDR` are
+adjusted within that pairwise comparison. The returned data frame also stores
+the attempted pair labels in `attr(result, "comparisons")`, including pairs with
+no reported regions.
 
 ### Column Meaning
 

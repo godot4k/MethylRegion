@@ -12,7 +12,9 @@
 | `mr_continuous()` | `data.type = "longitudinal"` | `amr_longitudinal()` |
 
 The dispatch depends only on `data.type` and whether `cov.mod` is `NULL`. It does
-not depend on the balance of 0/1 labels in `y`.
+not depend on the balance of 0/1 labels in `y`. If the first column of `y`
+contains more than two groups, `mr_bi()` runs each group pair through the same
+binary branch after subsetting samples and recoding that pair to 0 and 1.
 
 ## Output Columns By Branch
 
@@ -27,11 +29,18 @@ not depend on the balance of 0/1 labels in `y`.
 
 Only `mr_bi(..., data.type = "independent", cov.mod = NULL)` returns e-value columns (`e_value`, `e_adjust`).
 The other entry-point configurations do not currently return `e_value` or `e_adjust`.
+Multi-group `mr_bi()` results prepend `comparison`, `groupA`, and `groupB` to
+the corresponding branch schema, with adjusted statistics computed separately
+inside each pairwise comparison. `attr(result, "comparisons")` records all
+attempted pair labels, including pairs with no reported regions.
 
 ## Column Meaning
 
 | Column | Meaning |
 | --- | --- |
+| `comparison` | Pairwise group label such as `A_vs_B` for multi-group `mr_bi()` output. |
+| `groupA` | First group in a multi-group pairwise `mr_bi()` comparison, recoded to 0. |
+| `groupB` | Second group in a multi-group pairwise `mr_bi()` comparison, recoded to 1. |
 | `chr` | Chromosome. |
 | `start` | The start position of a methylation region. |
 | `end` | The end position of a methylation region. |

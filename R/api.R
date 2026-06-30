@@ -58,16 +58,114 @@
   result
 }
 
+.methylregion_y_frame <- function(y) {
+  y_df <- as.data.frame(y)
+  if (ncol(y_df) < 1) {
+    stop("y must contain at least one column.", call. = FALSE)
+  }
+  y_df
+}
+
+.methylregion_group_levels <- function(y) {
+  group <- as.character(y[[1]])
+  unique(group[!is.na(group)])
+}
+
+.methylregion_bind_rows_fill <- function(rows) {
+  rows <- rows[vapply(rows, is.data.frame, logical(1))]
+  if (length(rows) == 0) {
+    return(data.frame())
+  }
+  cols <- unique(unlist(lapply(rows, names), use.names = FALSE))
+  if (length(cols) == 0) {
+    return(data.frame())
+  }
+  rows <- lapply(rows, function(x) {
+    missing_cols <- setdiff(cols, names(x))
+    for (col in missing_cols) {
+      x[[col]] <- rep(NA, nrow(x))
+    }
+    x[, cols, drop = FALSE]
+  })
+  do.call(rbind, rows)
+}
+
+.methylregion_annotate_pair_result <- function(result, group_a, group_b) {
+  result <- .methylregion_result(result)
+  comparison <- paste(group_a, group_b, sep = "_vs_")
+  result$comparison <- rep(comparison, nrow(result))
+  result$groupA <- rep(group_a, nrow(result))
+  result$groupB <- rep(group_b, nrow(result))
+  leading <- c("comparison", "groupA", "groupB")
+  result[, c(leading, setdiff(names(result), leading)), drop = FALSE]
+}
+
+.methylregion_mr_bi_binary <- function(input_dat, y, data.type, cov.mod, controlist) {
+  if (data.type == "independent") {
+    if (is.null(cov.mod)) {
+      return(dmr_case_control(input_dat, y, controlist = controlist))
+    }
+    return(dmr_case_control_cov(input_dat, y, cov.mod = cov.mod, controlist = controlist))
+  }
+
+  if (data.type == "paired") {
+    if (!is.null(cov.mod)) {
+      return(dmr_longitudinal(input_dat, y, cov.mod = cov.mod, controlist = controlist))
+    }
+    return(dmr_paired(input_dat, y, controlist = controlist))
+  }
+
+  dmr_longitudinal(input_dat, y, cov.mod = cov.mod, controlist = controlist)
+}
+
+.methylregion_mr_bi_pairwise <- function(input_dat, y, data.type, cov.mod, controlist) {
+  y_df <- .methylregion_y_frame(y)
+  group <- as.character(y_df[[1]])
+  levels <- .methylregion_group_levels(y_df)
+  if (length(levels) < 2) {
+    stop("At least two non-missing groups are required in y.", call. = FALSE)
+  }
+  if (ncol(input_dat) - 2 != nrow(y_df)) {
+    stop("The number of methylation sample columns must match the number of rows in y.", call. = FALSE)
+  }
+  if (!is.null(cov.mod) && nrow(as.data.frame(cov.mod)) != nrow(y_df)) {
+    stop("cov.mod must have one row per sample.", call. = FALSE)
+  }
+
+  pairs <- combn(levels, 2, simplify = FALSE)
+  comparison_labels <- vapply(pairs, paste, character(1), collapse = "_vs_")
+  results <- lapply(pairs, function(pair) {
+    keep <- which(group %in% pair)
+    pair_input <- input_dat[, c(1, 2, keep + 2), drop = FALSE]
+    pair_y <- y_df[keep, , drop = FALSE]
+    pair_y[[1]] <- ifelse(as.character(pair_y[[1]]) == pair[1], 0, 1)
+    pair_cov <- NULL
+    if (!is.null(cov.mod)) {
+      pair_cov <- as.data.frame(cov.mod)[keep, , drop = FALSE]
+    }
+    result <- .methylregion_mr_bi_binary(pair_input, pair_y, data.type, pair_cov, controlist)
+    .methylregion_annotate_pair_result(result, pair[1], pair[2])
+  })
+  result <- .methylregion_bind_rows_fill(results)
+  attr(result, "comparisons") <- comparison_labels
+  result
+}
+
 #' Detect methylation regions for a binary phenotype
 #'
-#' `mr_bi()` is the main entry point for binary phenotype designs. The `data.type`
-#' argument selects the study structure, while `cov.mod = NULL` versus a
-#' non-`NULL` covariate data frame determines whether a covariate-adjusted
-#' branch is used when that branch exists.
+#' `mr_bi()` is the main entry point for binary phenotype designs. If the first
+#' column of `y` contains more than two groups, `mr_bi()` runs all pairwise
+#' group comparisons and returns one combined result with `comparison`,
+#' `groupA`, and `groupB` columns. The `data.type` argument selects the study
+#' structure, while `cov.mod = NULL` versus a non-`NULL` covariate data frame
+#' determines whether a covariate-adjusted branch is used when that branch
+#' exists.
 #'
 #' @param input_dat Data frame with `chr`, `pos`, and one methylation column per sample.
 #' @param y Data frame, matrix, or vector whose first column is the binary group
-#'   or state indicator coded as 0 and 1.
+#'   or state indicator coded as 0 and 1. If the first column contains more than
+#'   two distinct non-missing values, all pairwise comparisons are run after
+#'   recoding each pair to 0 and 1.
 #' @param data.type Study structure. One of `"independent"`, `"paired"`, or
 #'   `"longitudinal"`.
 #' @param cov.mod Optional data frame of sample-level covariates. For
@@ -77,10 +175,16 @@
 #'   dispatches to `dmr_longitudinal()`.
 #' @param controlist Optional list of segmentation controls.
 #' @param intput_dat Deprecated spelling retained for compatibility.
-#' @return A data frame of candidate methylation regions.
+#' @return A data frame of candidate methylation regions. Multi-group
+#'   `mr_bi()` calls include `comparison`, `groupA`, and `groupB` columns.
 mr_bi <- function(input_dat, y, data.type = c("independent", "paired", "longitudinal"),
                   cov.mod = NULL, controlist = list(), intput_dat = NULL) {
   data.type <- match.arg(data.type)
+  y_df <- .methylregion_y_frame(y)
+  if (length(.methylregion_group_levels(y_df)) > 2) {
+    input_dat <- .methylregion_input(input_dat, intput_dat)
+    return(.methylregion_mr_bi_pairwise(input_dat, y_df, data.type, cov.mod, controlist))
+  }
 
   if (data.type == "independent") {
     if (is.null(cov.mod)) {

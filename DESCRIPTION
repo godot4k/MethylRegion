@@ -18,7 +18,8 @@ License: Apache License (>= 2)
 Encoding: UTF-8
 Depends: R (>= 4.0.0)
 Imports:
-    stats
+    stats,
+    utils
 Suggests:
     lmerTest
 URL: https://github.com/godot4k/MethylRegion

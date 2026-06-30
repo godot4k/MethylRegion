@@ -64,3 +64,26 @@ if (nrow(mixed_res) > 0) {
   stopifnot(all(c("coef_lmm", "p_value", "FDR") %in% names(mixed_res)))
   stopifnot(!any(c("e_value", "e_adjust", "e_bh_significant") %in% names(mixed_res)))
 }
+
+multi_dat <- data.frame(
+  chr = rep("chr1", 12),
+  pos = seq(100, 1200, by = 100),
+  sample1 = rep(0.05, 12),
+  sample2 = rep(0.06, 12),
+  sample3 = rep(0.95, 12),
+  sample4 = rep(0.94, 12),
+  sample5 = rep(c(0.4, 0.6), 6),
+  sample6 = rep(c(0.5, 0.7), 6)
+)
+multi_y <- data.frame(group = c("A", "A", "B", "B", "C", "C"))
+multi_res <- mr_bi(
+  multi_dat,
+  multi_y,
+  data.type = "independent",
+  controlist = list(mincpgs = 2, trend = 0, valley = 0)
+)
+stopifnot(is.data.frame(multi_res))
+stopifnot(all(c("comparison", "groupA", "groupB") %in% names(multi_res)))
+stopifnot(identical(attr(multi_res, "comparisons"), c("A_vs_B", "A_vs_C", "B_vs_C")))
+stopifnot(nrow(multi_res) == 3)
+stopifnot(identical(as.integer(table(multi_res$comparison)[attr(multi_res, "comparisons")]), c(1L, 1L, 1L)))

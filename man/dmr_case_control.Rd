@@ -39,8 +39,9 @@ amr_longitudinal(input_dat, y, cov.mod = NULL, controlist = list(),
 \item{input_dat}{A data frame with columns \code{chr}, \code{pos}, and one
 methylation column per sample.}
 \item{y}{Study-design response data. For DMR functions, the first column is a
-binary group or state coded 0 and 1. For AMR functions, the first column is a
-numeric continuous phenotype.}
+binary group or state coded 0 and 1. If \code{mr_bi()} receives more than two
+non-missing groups in the first column, it runs all pairwise group comparisons.
+For AMR functions, the first column is a numeric continuous phenotype.}
 \item{data.type}{Study structure for the main entry points. For \code{mr_bi()},
 choose \code{"independent"}, \code{"paired"}, or \code{"longitudinal"}.
 For \code{mr_continuous()}, choose \code{"independent"} or
@@ -62,6 +63,13 @@ covariate-aware branches where both branches exist.}
 with covariates dispatch to \code{dmr_longitudinal()}. With
 \code{data.type = "longitudinal"}, \code{mr_bi()} dispatches to
 \code{dmr_longitudinal()} whether or not \code{cov.mod} is supplied.
+If the first column of \code{y} contains more than two groups, \code{mr_bi()}
+subsets samples for every pair of groups, recodes that pair to 0 and 1, runs the
+same branch-specific binary analysis, and stacks the pairwise results with
+leading \code{comparison}, \code{groupA}, and \code{groupB} columns. Adjusted
+statistics such as \code{FDR} are computed within each pairwise comparison. The
+returned data frame stores all attempted pair labels, including pairs with no
+reported regions, in \code{attr(result, "comparisons")}.
 
 \code{mr_continuous()} is the main entry point for continuous phenotypes. With
 \code{data.type = "independent"}, it dispatches to \code{amr_continuous()}. With
